@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="11ace98f-d6fa-4629-8085-da06371d6ff0" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="ed9fd833-e21a-4da7-bdf4-0a898863898d" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="ahmedmikhlif" database="inventory" />
+	</db:config>
+	<flow name="apiexperienceFlow" doc:id="e95b897c-c4f4-48c2-a0b5-bb601e1dfacd">
+		<http:listener doc:name="Listener" doc:id="1e3b3f03-8c07-4581-8ba1-08d1f1850e4a" config-ref="HTTP_Listener_config" path="/inventory" />
+		<logger level="INFO" doc:name="Logger" doc:id="86be97f0-6546-4723-9e93-8ed3fc5c3e76" message="received request"/>
+		<flow-ref doc:name="Flow Reference" doc:id="432705d1-1987-4e17-9081-6b3dab1e8eaa" name="apiProcessFlow"/>
+	</flow>
+	<flow name="apiProcessFlow" doc:id="737d6767-fb59-41af-92fd-578784460938" >
+		<set-variable value="#[attributes.queryParams.Type]" doc:name="Set Variable" doc:id="301334e0-8dc3-412c-8344-1b3f9a234682" variableName="inventoryType"/>
+		<choice doc:name="Choice" doc:id="64ef0c03-979d-4790-a8bf-52bff363bccc" >
+			<when expression="#[vars.inventoryType== 'cruise']">
+				<flow-ref doc:name="Flow Reference" doc:id="0d9bb250-d248-4e4e-a695-e686098db577" name="cruise-subflow"/>
+			</when>
+			<when expression="#[vars.inventoryType== 'trains']" >
+				<flow-ref doc:name="Flow Reference" doc:id="b25aa494-4d15-420d-ad3a-1c68c6abfae5" name="trains-subflow"/>
+			</when>
+			<when expression="#[vars.inventoryType == 'flights']" >
+				<flow-ref doc:name="Flow Reference" doc:id="050ad043-f264-4f33-8ba3-c0748a8d3fac" name="flights-subflow" />
+			</when>
+			<otherwise>
+				<set-payload value="#[payload]" doc:name="Set Payload" doc:id="db780cd1-fb9d-4426-bd7d-16eb07bef419" />
+			</otherwise>
+		</choice>
+	</flow>
+	<sub-flow name="cruise-subflow" doc:id="7c4e9917-edad-4afa-b3d8-2277e5c9ca5b" >
+		<db:select doc:name="Select" doc:id="13f7d587-0202-4941-b0c1-e29d41a7dd7e" config-ref="Database_Config">
+			<db:sql><![CDATA[SELECT * FROM cruise ;]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="dbc8cb14-d645-4cee-8ec5-11795a4c0f8e">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="trains-subflow" doc:id="dd10c64b-77f0-470a-9413-1ff1ef86d33a" >
+		<db:select doc:name="Select" doc:id="10709624-bd2c-4113-8c67-0213c8112d26" config-ref="Database_Config">
+			<db:sql><![CDATA[SELECT * FROM trains where id = 5 ;]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="7fcd8c93-4bf0-4341-8b6f-e9312025fc00">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="flights-subflow" doc:id="feeedb62-3b85-4a3f-9624-504d7b959e7b" >
+		<db:select doc:name="Select" doc:id="359fa5cc-921a-4df0-95a5-5511aa42ee9a" config-ref="Database_Config">
+			<db:sql><![CDATA[SELECT * FROM flights where airline = 'United';]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="e16d66b2-58e0-4dae-b1e1-a0325407e11a">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+</mule>
