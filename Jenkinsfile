@@ -2,11 +2,11 @@ pipeline {
     agent any
 
     environment {
-        // These should be stored securely in Jenkins as credentials with ID: 'anypoint-credentials'
-        ANYPOINT_CREDENTIALS = credentials('anypoint-credentials')
-        ANYPOINT_ENV         = 'dev'
-        APP_NAME             = 'api-led-connectivity-project'
-        REGION               = 'us-east-1'
+        ANYPOINT_USERNAME = credentials('AJMalak')
+        ANYPOINT_PASSWORD = credentials('2011@MalakFirst')
+        ANYPOINT_ENV      = 'dev'
+        APP_NAME          = 'api-led-connectivity-project'
+        REGION            = 'us-east-1'
     }
 
     stages {
@@ -25,13 +25,11 @@ pipeline {
         stage('Deploy to CloudHub') {
             steps {
                 sh """
-                    anypoint-cli-v4 runtime-mgr cloudhub-application deploy ${APP_NAME} \\
-                    --username=${ANYPOINT_CREDENTIALS_USR} \\
-                    --password=${ANYPOINT_CREDENTIALS_PSW} \\
-                    --environment=${ANYPOINT_ENV} \\
-                    --region=${REGION} \\
-                    --workers 1 --workerType MICRO \\
-                    --runtimeVersion 4.4.0 \\
+                    anypoint-cli-v4 runtime-mgr cloudhub-application deploy ${APP_NAME} \
+                    --username=${ANYPOINT_USERNAME} --password=${ANYPOINT_PASSWORD} \
+                    --environment=${ANYPOINT_ENV} --region=${REGION} \
+                    --workers 1 --workerType MICRO \
+                    --runtimeVersion 4.4.0 \
                     --file target/${APP_NAME}-1.0.0.jar
                 """
             }
